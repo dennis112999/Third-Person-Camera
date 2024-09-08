@@ -13,6 +13,9 @@ namespace TPC
         [SerializeField] private float _runSpeed = 3.0f;
         [SerializeField] private float _rotationSpeed = 50.0f;
         [SerializeField] private float _gravity = -30.0f;
+
+        [Header("Only useful with Follow and Independent")]
+        [SerializeField] private bool _followCameraForward = false;
         [SerializeField] private float _turnRate = 200.0f;
         [SerializeField] private Vector3 _velocity = new Vector3(0.0f, 0.0f, 0.0f);
 
@@ -63,14 +66,21 @@ namespace TPC
         /// <param name="v">Vertical input value</param>
         private void RotatePlayer(float h, float v)
         {
-            if (Mathf.Abs(v) > 0.1f || Mathf.Abs(h) > 0.1f)
+            if (_followCameraForward)
             {
-                Vector3 cameraEulerAngles = Camera.main.transform.rotation.eulerAngles;
-                transform.rotation = Quaternion.RotateTowards(
-                    transform.rotation,
-                    Quaternion.Euler(0.0f, cameraEulerAngles.y, 0.0f),
-                    _turnRate * Time.deltaTime
-                );
+                if (Mathf.Abs(v) > 0.1f || Mathf.Abs(h) > 0.1f)
+                {
+                    Vector3 cameraEulerAngles = Camera.main.transform.rotation.eulerAngles;
+                    transform.rotation = Quaternion.RotateTowards(
+                        transform.rotation,
+                        Quaternion.Euler(0.0f, cameraEulerAngles.y, 0.0f),
+                        _turnRate * Time.deltaTime
+                    );
+                }
+            }
+            else
+            {
+                transform.Rotate(0.0f, h * _rotationSpeed * Time.deltaTime, 0.0f);
             }
         }
 

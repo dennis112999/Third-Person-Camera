@@ -9,6 +9,7 @@ namespace TRC
             Track,
             Follow,
             FollowWithTrackRotation,
+            FollowWithIndependentRotation,
         }
 
         [Header("Third Person Camera (TPC) Type")]
@@ -23,6 +24,12 @@ namespace TRC
         [SerializeField] private Vector3 _angleOffset = new Vector3(0.0f, 0.0f, 0.0f);
         [Tooltip("The damping factor to smooth the changes in position and rotation of the camera.")]
         [SerializeField] private float _damping = 1.0f;
+
+        [Header("Follow Independent Rotation")]
+        [SerializeField] private float mMinPitch = -30.0f;
+        [SerializeField] private float mMaxPitch = 30.0f;
+        [SerializeField] private float mRotationSpeed = 5.0f;
+        private float angleX = 0.0f;
 
         #region MonoBehaviour
 
@@ -53,6 +60,9 @@ namespace TRC
                 case ThirdPersonCameraType.FollowWithTrackRotation:
                     SetCameraPositionAndRotation(CalculateTargetPosition(), CalculateRotation(true));
                     break;
+                case ThirdPersonCameraType.FollowWithIndependentRotation:
+                    SetCameraPositionAndRotation(CalculateTargetPosition(), Quaternion.Euler(_angleOffset));
+                    break;
             }
         }
 
@@ -78,6 +88,9 @@ namespace TRC
                 case ThirdPersonCameraType.FollowWithTrackRotation:
                     CameraType_Follow(true);
                     break;
+                case ThirdPersonCameraType.FollowWithIndependentRotation:
+                    CameraType_FollowWithIndependentRotation();
+                    break;
             }
         }
 
@@ -97,6 +110,24 @@ namespace TRC
 
             // Smoothly interpolate position and rotation
             transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * _damping);
+            transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * _damping);
+        }
+
+        private void CameraType_FollowWithIndependentRotation()
+        {
+            float mx = Input.GetAxis("Mouse X");
+            float my = Input.GetAxis("Mouse Y");
+
+            angleX -= my * mRotationSpeed;
+            angleX = Mathf.Clamp(angleX, mMinPitch, mMaxPitch);
+
+            Vector3 eulerAngles = transform.rotation.eulerAngles;
+            eulerAngles.y += mx * mRotationSpeed;
+
+            Quaternion newRot = Quaternion.Euler(angleX, eulerAngles.y, 0.0f) * Quaternion.Euler(_angleOffset);
+            transform.rotation = newRot;
+
+            Vector3 targetPos = CalculateTargetPosition();
             transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * _damping);
         }
 
