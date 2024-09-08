@@ -10,6 +10,7 @@ namespace TRC
             Follow,
             FollowWithTrackRotation,
             FollowWithIndependentRotation,
+            TopDown,
         }
 
         [Header("Third Person Camera (TPC) Type")]
@@ -17,7 +18,7 @@ namespace TRC
 
         [Header("Target")]
         [SerializeField] private Transform _playerTrans;
-        [SerializeField] private float mPlayerHeight = 2.0f;
+        [SerializeField] private float _playerHeight = 2.0f;
 
         [Header("Camera Magnitude")]
         [SerializeField] private Vector3 _positionOffset = new Vector3(0.0f, 2.0f, -2.5f);
@@ -26,10 +27,10 @@ namespace TRC
         [SerializeField] private float _damping = 1.0f;
 
         [Header("Follow Independent Rotation")]
-        [SerializeField] private float mMinPitch = -30.0f;
-        [SerializeField] private float mMaxPitch = 30.0f;
-        [SerializeField] private float mRotationSpeed = 5.0f;
-        private float angleX = 0.0f;
+        [SerializeField] private float _minPitch = -30.0f;
+        [SerializeField] private float _maxPitch = 30.0f;
+        [SerializeField] private float _rotationSpeed = 5.0f;
+        private float _angleX = 0.0f;
 
         #region MonoBehaviour
 
@@ -63,6 +64,15 @@ namespace TRC
                 case ThirdPersonCameraType.FollowWithIndependentRotation:
                     SetCameraPositionAndRotation(CalculateTargetPosition(), Quaternion.Euler(_angleOffset));
                     break;
+                case ThirdPersonCameraType.TopDown:
+                    Vector3 topDownPosition = _playerTrans.position + new Vector3(0, _positionOffset.y, 0);
+                    SetCameraPositionAndRotation(topDownPosition, Quaternion.Euler(90.0f, 0.0f, 0.0f));
+                    break;
+                default:
+#if UNITY_EDITOR
+                    Debug.LogError($"Invalid ThirdPersonCameraType: {_TPCType}");
+#endif
+                    break;
             }
         }
 
@@ -91,6 +101,14 @@ namespace TRC
                 case ThirdPersonCameraType.FollowWithIndependentRotation:
                     CameraType_FollowWithIndependentRotation();
                     break;
+                case ThirdPersonCameraType.TopDown:
+                    CameraType_TopDown();
+                    break;
+                default:
+#if UNITY_EDITOR
+                    Debug.LogError($"Invalid ThirdPersonCameraType: {_TPCType}");
+#endif
+                    break;
             }
         }
 
@@ -99,7 +117,7 @@ namespace TRC
         private void CameraType_Track()
         {
             Vector3 targetPos = _playerTrans.transform.position;
-            targetPos.y += mPlayerHeight;
+            targetPos.y += _playerHeight;
             transform.LookAt(targetPos);
         }
 
@@ -118,17 +136,25 @@ namespace TRC
             float mx = Input.GetAxis("Mouse X");
             float my = Input.GetAxis("Mouse Y");
 
-            angleX -= my * mRotationSpeed;
-            angleX = Mathf.Clamp(angleX, mMinPitch, mMaxPitch);
+            _angleX -= my * _rotationSpeed;
+            _angleX = Mathf.Clamp(_angleX, _minPitch, _maxPitch);
 
             Vector3 eulerAngles = transform.rotation.eulerAngles;
-            eulerAngles.y += mx * mRotationSpeed;
+            eulerAngles.y += mx * _rotationSpeed;
 
-            Quaternion newRot = Quaternion.Euler(angleX, eulerAngles.y, 0.0f) * Quaternion.Euler(_angleOffset);
+            Quaternion newRot = Quaternion.Euler(_angleX, eulerAngles.y, 0.0f) * Quaternion.Euler(_angleOffset);
             transform.rotation = newRot;
 
             Vector3 targetPos = CalculateTargetPosition();
             transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * _damping);
+        }
+
+        private void CameraType_TopDown()
+        {
+            Vector3 targetPos = _playerTrans.position;
+            targetPos.y += _positionOffset.y;
+            transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * _damping);
+            transform.rotation = Quaternion.Euler(90.0f, 0.0f, 0.0f);
         }
 
         #endregion Camera Movement Function
