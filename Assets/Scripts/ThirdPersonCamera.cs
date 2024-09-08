@@ -8,6 +8,7 @@ namespace TRC
         {
             Track,
             Follow,
+            FollowWithTrackRotation,
         }
 
         [Header("Third Person Camera (TPC) Type")]
@@ -49,6 +50,9 @@ namespace TRC
                 case ThirdPersonCameraType.Follow:
                     SetCameraPositionAndRotation(CalculateTargetPosition(), CalculateRotation(false));
                     break;
+                case ThirdPersonCameraType.FollowWithTrackRotation:
+                    SetCameraPositionAndRotation(CalculateTargetPosition(), CalculateRotation(true));
+                    break;
             }
         }
 
@@ -70,6 +74,9 @@ namespace TRC
                     break;
                 case ThirdPersonCameraType.Follow:
                     CameraType_Follow();
+                    break;
+                case ThirdPersonCameraType.FollowWithTrackRotation:
+                    CameraType_Follow(true);
                     break;
             }
         }
