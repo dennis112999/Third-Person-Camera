@@ -7,6 +7,7 @@ namespace TRC
         public enum ThirdPersonCameraType
         {
             Track,
+            Follow,
         }
 
         [Header("Third Person Camera (TPC) Type")]
@@ -18,6 +19,9 @@ namespace TRC
 
         [Header("Camera Magnitude")]
         [SerializeField] private Vector3 _positionOffset = new Vector3(0.0f, 2.0f, -2.5f);
+        [SerializeField] private Vector3 _angleOffset = new Vector3(0.0f, 0.0f, 0.0f);
+        [Tooltip("The damping factor to smooth the changes in position and rotation of the camera.")]
+        [SerializeField] private float _damping = 1.0f;
 
         #region MonoBehaviour
 
@@ -42,6 +46,9 @@ namespace TRC
                 case ThirdPersonCameraType.Track:
                     SetCameraPositionAndRotation(CalculateTargetPosition(), Quaternion.LookRotation(_playerTrans.position - transform.position));
                     break;
+                case ThirdPersonCameraType.Follow:
+                    SetCameraPositionAndRotation(CalculateTargetPosition(), CalculateRotation(false));
+                    break;
             }
         }
 
@@ -61,6 +68,9 @@ namespace TRC
                 case ThirdPersonCameraType.Track:
                     CameraType_Track();
                     break;
+                case ThirdPersonCameraType.Follow:
+                    CameraType_Track();
+                    break;
             }
         }
 
@@ -71,6 +81,16 @@ namespace TRC
             Vector3 targetPos = _playerTrans.transform.position;
             targetPos.y += mPlayerHeight;
             transform.LookAt(targetPos);
+        }
+
+        private void CameraType_Follow(bool allowRotationTracking = false)
+        {
+            Quaternion targetRotation = CalculateRotation(allowRotationTracking);
+            Vector3 targetPos = CalculateTargetPosition();
+
+            // Smoothly interpolate position and rotation
+            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * _damping);
+            transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * _damping);
         }
 
         #endregion Camera Movement Function
@@ -87,6 +107,25 @@ namespace TRC
 
             Vector3 targetPos = _playerTrans.position;
             return targetPos + forward * _positionOffset.z + right * _positionOffset.x + up * _positionOffset.y;
+        }
+
+
+        /// <summary>
+        /// Calculates the camera's rotation
+        /// </summary>
+        /// <param name="allowRotationTracking">Determines if the camera should track the player's rotation.</param>
+        /// <returns>
+        /// The calculated rotation of the camera
+        /// </returns>
+        private Quaternion CalculateRotation(bool allowRotationTracking)
+        {
+            Quaternion initialRotation = Quaternion.Euler(_angleOffset);
+
+            if (allowRotationTracking)
+            {
+                return _playerTrans.rotation * initialRotation;
+            }
+            return initialRotation;
         }
     }
 
