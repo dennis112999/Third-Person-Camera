@@ -69,7 +69,7 @@ namespace TRC
                     CameraType_Track();
                     break;
                 case ThirdPersonCameraType.Follow:
-                    CameraType_Track();
+                    CameraType_Follow();
                     break;
             }
         }
