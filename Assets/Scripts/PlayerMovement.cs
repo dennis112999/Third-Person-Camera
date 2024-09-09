@@ -33,7 +33,7 @@ namespace TPC
 
         #endregion MonoBehaviour
 
-        private void Move()
+        public void Move()
         {
             float h = Input.GetAxis("Horizontal");
             float v = Input.GetAxis("Vertical");
